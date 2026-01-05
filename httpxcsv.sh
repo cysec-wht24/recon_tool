@@ -28,14 +28,18 @@ tail -n +2 "$CSV_FILE" | while IFS=, read -r identifier asset_type rest; do
         
         echo "Scanning: $domain"
         
-        if httpx "https://$domain" -silent -status-code > /dev/null 2>&1; then
-            status=$(httpx "https://$domain" -silent -status-code 2>/dev/null)
-            echo "✓ https://$domain [$status]" | tee -a "$OUTPUT_FILE"
-        elif httpx "http://$domain" -silent -status-code > /dev/null 2>&1; then
-            status=$(httpx "http://$domain" -silent -status-code 2>/dev/null)
-            echo "✓ http://$domain [$status]" | tee -a "$OUTPUT_FILE"
+        status_https=$(httpx "https://$domain" -silent -status-code 2>/dev/null)
+        
+        if [ -n "$status_https" ]; then
+            echo "✓ https://$domain [$status_https]" | tee -a "$OUTPUT_FILE"
         else
-            echo "✗ $domain [UNREACHABLE]" | tee -a "$OUTPUT_FILE"
+            status_http=$(httpx "http://$domain" -silent -status-code 2>/dev/null)
+            
+            if [ -n "$status_http" ]; then
+                echo "✓ http://$domain [$status_http]" | tee -a "$OUTPUT_FILE"
+            else
+                echo "✗ $domain [UNREACHABLE - No response]" | tee -a "$OUTPUT_FILE"
+            fi
         fi
     fi
 done
