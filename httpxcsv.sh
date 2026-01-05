@@ -1,49 +1,32 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]; then
-    echo "Usage: $0 <path-to-csv-file>"
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 assets.csv"
     exit 1
 fi
 
 CSV_FILE="$1"
+OUTPUT_FILE="scan_results.txt"
 
 if [ ! -f "$CSV_FILE" ]; then
-    echo "Error: File '$CSV_FILE' not found!"
+    echo "Error: File not found!"
     exit 1
 fi
-
-OUTPUT_FILE="scan_results.txt"
 
 echo "Domain Scan Results" > "$OUTPUT_FILE"
 echo "===================" >> "$OUTPUT_FILE"
 echo "" >> "$OUTPUT_FILE"
-echo "Starting scan of: $CSV_FILE"
-echo ""
 
-# Extract ONLY first column using cut, skip header
-tail -n +2 "$CSV_FILE" | cut -d',' -f1 | while read -r domain; do
-    
-    # Skip empty lines
-    [ -z "$domain" ] && continue
-    
-    echo "Scanning: $domain"
-    
-    # Try HTTPS
-    result=$(httpx -silent -status-code -no-color "https://$domain" 2>/dev/null)
-    
-    if [ -n "$result" ]; then
-        echo "✓ https://$domain" | tee -a "$OUTPUT_FILE"
-    else
-        # Try HTTP
-        result=$(httpx -silent -status-code -no-color "http://$domain" 2>/dev/null)
-        
-        if [ -n "$result" ]; then
-            echo "✓ http://$domain" | tee -a "$OUTPUT_FILE"
-        else
-            echo "✗ $domain [UNREACHABLE]" | tee -a "$OUTPUT_FILE"
-        fi
-    fi
-done
+echo "[*] Extracting domains..."
+
+# Extract first column, skip header, trim spaces
+awk -F',' 'NR>1 {print $1}' "$CSV_FILE" | sed 's/^ *//;s/ *$//' > domains.txt
+
+echo "[*] Scanning live domains..."
+
+# httpx handles http/https automatically
+httpx -l domains.txt -silent -status-code -title \
+| tee -a "$OUTPUT_FILE"
 
 echo ""
-echo "Scan complete! Results saved to $OUTPUT_FILE"
+echo "[+] Scan complete → $OUTPUT_FILE"
