@@ -43,7 +43,7 @@ if [ -f "$OUTPUT_FILE" ]; then
     echo "Active: $ACTIVE/$TOTAL"
     echo "Results: $OUTPUT_FILE"
     echo ""
-    cat "$OUTPUT_FILE"
+    sort -t'[' -k2 -n "$OUTPUT_FILE"
 else
     echo "No active domains found"
 fi
