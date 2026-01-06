@@ -1,48 +1,52 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 assets.csv"
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <path-to-csv-file>"
+    echo "Example: $0 /path/to/domains.csv"
     exit 1
 fi
 
 CSV_FILE="$1"
-OUTPUT_FILE="scan_results.txt"
 
 if [ ! -f "$CSV_FILE" ]; then
-    echo "Error: File not found!"
+    echo "Error: File '$CSV_FILE' not found!"
     exit 1
 fi
 
 OUTPUT_FILE="scan_results.txt"
-
-echo "Domain Scan Results" > "$OUTPUT_FILE"
-echo "===================" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
+TEMP_FILE="temp_domains.txt"
 
 echo "Starting scan of: $CSV_FILE"
 echo ""
 
-tail -n +2 "$CSV_FILE" | while IFS=, read -r identifier asset_type rest; do
-    if [[ "$asset_type" == "URL" ]]; then
-        domain=$(echo "$identifier" | tr -d '"')
-        
-        echo "Scanning: $domain"
-        
-        status_https=$(httpx "https://$domain" -silent -status-code 2>/dev/null)
-        
-        if [ -n "$status_https" ]; then
-            echo "✓ https://$domain [$status_https]" | tee -a "$OUTPUT_FILE"
-        else
-            status_http=$(httpx "http://$domain" -silent -status-code 2>/dev/null)
-            
-            if [ -n "$status_http" ]; then
-                echo "✓ http://$domain [$status_http]" | tee -a "$OUTPUT_FILE"
-            else
-                echo "✗ $domain [UNREACHABLE - No response]" | tee -a "$OUTPUT_FILE"
-            fi
-        fi
-    fi
-done
+# Extract only first column (domains), skip header
+tail -n +2 "$CSV_FILE" | cut -d',' -f1 | tr -d '"' > "$TEMP_FILE"
 
+TOTAL=$(wc -l < "$TEMP_FILE")
+echo "Found $TOTAL domains to scan"
 echo ""
-echo "Scan complete! Results saved to $OUTPUT_FILE"
+
+# Scan all domains with httpx (batch mode)
+httpx -l "$TEMP_FILE" \
+    -silent \
+    -status-code \
+    -title \
+    -threads 30 \
+    -timeout 10 \
+    -o "$OUTPUT_FILE"
+
+# Show results
+if [ -f "$OUTPUT_FILE" ]; then
+    ACTIVE=$(wc -l < "$OUTPUT_FILE")
+    echo ""
+    echo "Scan complete!"
+    echo "Active: $ACTIVE/$TOTAL"
+    echo "Results: $OUTPUT_FILE"
+    echo ""
+    cat "$OUTPUT_FILE"
+else
+    echo "No active domains found"
+fi
+
+# Cleanup
+rm -f "$TEMP_FILE"
