@@ -13,20 +13,36 @@ if [ ! -f "$CSV_FILE" ]; then
     exit 1
 fi
 
+OUTPUT_FILE="scan_results.txt"
+
 echo "Domain Scan Results" > "$OUTPUT_FILE"
 echo "===================" >> "$OUTPUT_FILE"
 echo "" >> "$OUTPUT_FILE"
 
-echo "[*] Extracting domains..."
+echo "Starting scan of: $CSV_FILE"
+echo ""
 
-# Extract first column, skip header, trim spaces
-awk -F',' 'NR>1 {print $1}' "$CSV_FILE" | sed 's/^ *//;s/ *$//' > domains.txt
-
-echo "[*] Scanning live domains..."
-
-# httpx handles http/https automatically
-httpx -l domains.txt -silent -status-code -title \
-| tee -a "$OUTPUT_FILE"
+tail -n +2 "$CSV_FILE" | while IFS=, read -r identifier asset_type rest; do
+    if [[ "$asset_type" == "URL" ]]; then
+        domain=$(echo "$identifier" | tr -d '"')
+        
+        echo "Scanning: $domain"
+        
+        status_https=$(httpx "https://$domain" -silent -status-code 2>/dev/null)
+        
+        if [ -n "$status_https" ]; then
+            echo "✓ https://$domain [$status_https]" | tee -a "$OUTPUT_FILE"
+        else
+            status_http=$(httpx "http://$domain" -silent -status-code 2>/dev/null)
+            
+            if [ -n "$status_http" ]; then
+                echo "✓ http://$domain [$status_http]" | tee -a "$OUTPUT_FILE"
+            else
+                echo "✗ $domain [UNREACHABLE - No response]" | tee -a "$OUTPUT_FILE"
+            fi
+        fi
+    fi
+done
 
 echo ""
-echo "[+] Scan complete → $OUTPUT_FILE"
+echo "Scan complete! Results saved to $OUTPUT_FILE"
