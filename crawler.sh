@@ -17,5 +17,5 @@ if [ ! -d "$PATH_TO_STORE" ]; then
 fi
 
 echo "Running standard mode scan"
-katana $DOMAIN > "$PATH_TO_STORE/katana_$TODAY.txt"
+katana $DOMAIN > "$PATH_TO_STORE/katana_standard_$TODAY.txt"
 echo "Output stored successfully"
