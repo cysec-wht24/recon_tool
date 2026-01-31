@@ -3,10 +3,11 @@ INPUT=$1
 TODAY=$(date +%Y-%m-%d)
 PATH_TO_KATANA="whatever/path/katana"
 PATH_TO_WAYBACKURL="whatever/path/wayback"
+PATH_TO_GAU="whatever/path/gau"
 PATH_TO_STORE="/home/results"
 echo "This scan was created on $TODAY"
 
-echo "checking directory exists"
+echo "checking required binaries"
 if [ ! -x "$PATH_TO_KATANA" ]; then
     echo "Katana binary not present"
     exit 1
@@ -17,12 +18,19 @@ if [ ! -x "$PATH_TO_WAYBACKURL" ]; then
     exit 1
 fi
 
+if [ ! -x "$PATH_TO_GAU" ]; then
+    echo "gau binary not present"
+    exit 1
+fi
+
 if [ -z "$INPUT" ]; then
     echo "Usage: $0 <url | targets.txt | targets.csv>"
     exit 1
 fi
 
-URL_LIST="/tmp/katana_input_urls_$TODAY.txt"
+URL_LIST=$(mktemp)
+trap 'rm -f "$URL_LIST"' EXIT
+
 if [[ "$INPUT" =~ ^https?:// ]]; then
     echo "[+] Single URL detected"
     echo "$INPUT" > "$URL_LIST"
@@ -62,9 +70,14 @@ while read -r URL; do
         -silent \
         > "$OUTPUT_DIR/katana_standard_$TODAY.txt"
 
-    echo "[+] Waybackurls on $URL"
+    echo "[+] Historical URLs (gau + waybackurls) on $URL"
+
     HOST=$(echo "$URL" | sed 's~https\?://~~' | cut -d/ -f1)
-    "$PATH_TO_WAYBACKURL" "$HOST" > "$OUTPUT_DIR/wayback_$TODAY.txt"
+
+    (
+        "$PATH_TO_WAYBACKURL" "$HOST"
+        "$PATH_TO_GAU" "$HOST"
+    ) | sort -u > "$OUTPUT_DIR/historical_$TODAY.txt"
 
     echo "Output saved to $OUTPUT_DIR"
 
