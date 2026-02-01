@@ -1,32 +1,29 @@
 #!/bin/bash
 INPUT=$1
 TODAY=$(date +%Y-%m-%d)
-PATH_TO_KATANA="whatever/path/katana"
-PATH_TO_WAYBACKURL="whatever/path/wayback"
-PATH_TO_GAU="whatever/path/gau"
-PATH_TO_STORE="/home/results"
+PATH_TO_KATANA="$HOME/go/bin/katana"
+PATH_TO_WAYBACKURL="$HOME/go/bin/waybackurls"
+PATH_TO_GAU="$HOME/go/bin/gau"
+PATH_TO_STORE="$HOME/results"
+
 echo "This scan was created on $TODAY"
-
-echo "checking required binaries"
-if [ ! -x "$PATH_TO_KATANA" ]; then
-    echo "Katana binary not present"
-    exit 1
-fi
-
-if [ ! -x "$PATH_TO_WAYBACKURL" ]; then
-    echo "waybackurls binary not present"
-    exit 1
-fi
-
-if [ ! -x "$PATH_TO_GAU" ]; then
-    echo "gau binary not present"
-    exit 1
-fi
-
 if [ -z "$INPUT" ]; then
     echo "Usage: $0 <url | targets.txt | targets.csv>"
     exit 1
 fi
+
+echo "checking required binaries"
+missing=0
+
+for tool in "$PATH_TO_KATANA" "$PATH_TO_WAYBACKURL" "$PATH_TO_GAU"; do
+    if [ ! -x "$tool" ]; then
+        echo "Missing or non-executable: $tool"
+        missing=1
+    fi
+done
+
+[ "$missing" -eq 1 ] && exit 1
+echo "Katana, waybackurls, gau tool present"
 
 URL_LIST=$(mktemp)
 trap 'rm -f "$URL_LIST"' EXIT
@@ -47,9 +44,13 @@ fi
 
 RUN_NAME=$(basename "$INPUT" | cut -d. -f1)
 RUN_DIR="$PATH_TO_STORE/$RUN_NAME"
-mkdir -p "$RUN_DIR"
+mkdir -p "$RUN_DIR" || {
+    echo "Cannot create $RUN_DIR (permission denied?)"
+    exit 1
+}
 
-while read -r URL; do
+while IFS= read -r URL || [ -n "$URL" ]; do
+    URL=$(echo "$URL" | xargs)
     [ -z "$URL" ] && continue
 
     if [[ ! "$URL" =~ ^https?:// ]]; then
@@ -68,6 +69,7 @@ while read -r URL; do
         -iqp \
         -rl 100 \
         -silent \
+        </dev/null \
         > "$OUTPUT_DIR/katana_standard_$TODAY.txt"
 
     echo "[+] Historical URLs (gau + waybackurls) on $URL"
@@ -75,8 +77,8 @@ while read -r URL; do
     HOST=$(echo "$URL" | sed 's~https\?://~~' | cut -d/ -f1)
 
     (
-        "$PATH_TO_WAYBACKURL" "$HOST"
-        "$PATH_TO_GAU" "$HOST"
+        "$PATH_TO_WAYBACKURL" "$HOST" </dev/null
+        "$PATH_TO_GAU" "$HOST" </dev/null
     ) | sort -u > "$OUTPUT_DIR/historical_$TODAY.txt"
 
     echo "Output saved to $OUTPUT_DIR"
