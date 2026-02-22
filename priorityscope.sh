@@ -4,12 +4,12 @@ set -euo pipefail
 INPUT=$1
 TODAY=$(date +%Y-%m-%d)
 
-PATH_TO_KATANA="$HOME/go/bin/katana"
-PATH_TO_NUCLEI="$HOME/go/bin/nuclei"
-PATH_TO_ARJUN="$HOME/python/bin/arjun"
-PATH_TO_FFUF="$HOME/go/bin/ffuf"
+PATH_TO_KATANA="$(command -v katana)"
+PATH_TO_NUCLEI="$(command -v nuclei)"
+PATH_TO_ARJUN="$(command -v arjun)"
+PATH_TO_FFUF="$(command -v ffuf)"
+PATH_TO_JQ="$(command -v jq)"
 PATH_TO_STORE="$HOME/results"
-PATH_TO_JQ="$(which jq)"
 WORDLIST="/usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt"
 
 echo "This scan was created on $TODAY"
@@ -62,6 +62,7 @@ if ! "$PATH_TO_NUCLEI" -update-templates >/dev/null 2>&1; then
     exit 1
 fi
 
+mkdir -p "$PATH_TO_STORE"
 RUN_DIR="$PATH_TO_STORE/$RUN_NAME"
 mkdir -p "$RUN_DIR" || {
     echo "Cannot create $RUN_DIR"
@@ -142,7 +143,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
     FFUF_URLS="$OUTPUT_DIR/ffuf_urls_$TODAY.txt"
 
     if [ -s "$FFUF_JSON" ]; then
-        jq -r '.results[]?.url' "$FFUF_JSON" 2>/dev/null \
+        "$PATH_TO_JQ" -r '.results[]?.url' "$FFUF_JSON" 2>/dev/null \
         | sort -u > "$FFUF_URLS"
     else
         touch "$FFUF_URLS"
@@ -157,7 +158,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         -o "$ARJUN_JSON"
         # Extract discovered URLs from Arjun JSON output
         if [ -s "$ARJUN_JSON" ]; then
-            jq -r 'to_entries[] | .key as $url | .value.params[]? | $url + "?" + .' "$ARJUN_JSON" 2>/dev/null \
+            "$PATH_TO_JQ" -r 'to_entries[] | .key as $url | .value.params[]? | $url + "?" + .' "$ARJUN_JSON" 2>/dev/null \
             | sort -u > "$ARJUN_URLS"
         else
             touch "$ARJUN_URLS"
