@@ -113,11 +113,11 @@ while IFS= read -r URL || [ -n "$URL" ]; do
     > "$CLEAN_URLS"
 
     JS_FILES="$OUTPUT_DIR/js_files_$TODAY.txt"
-    grep -Ei "\.js(\?|$)" "$CLEAN_URLS" > "$JS_FILES"
+    grep -Ei "\.js(\?|$)" "$CLEAN_URLS" > "$JS_FILES" || true
     echo "[+] Extracted JS files"
 
     PARAM_URLS="$OUTPUT_DIR/param_urls_$TODAY.txt"
-    grep -E "\?|=" "$CLEAN_URLS" > "$PARAM_URLS"
+    grep -E "\?|=" "$CLEAN_URLS" > "$PARAM_URLS" || true
 
     echo "[+] Running FFUF (directory fuzz)"
     FFUF_JSON="$OUTPUT_DIR/ffuf_dirs_$TODAY.json"
