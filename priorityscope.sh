@@ -116,7 +116,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
 
     "$PATH_TO_FFUF" \
         -u "$URL/FUZZ" \
-        -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt \
+        -w /usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt
         -t 50 \
         -rate 80 \
         -mc all \
