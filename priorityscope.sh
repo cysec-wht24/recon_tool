@@ -9,6 +9,7 @@ PATH_TO_ARJUN="$HOME/python/bin/arjun"
 PATH_TO_FFUF="$HOME/go/bin/ffuf"
 PATH_TO_STORE="$HOME/results"
 PATH_TO_JQ="$(which jq)"
+WORDLIST="/usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt"
 
 echo "This scan was created on $TODAY"
 
@@ -19,6 +20,11 @@ fi
 
 echo "[+] Checking required binaries"
 missing=0
+
+if [ ! -f "$WORDLIST" ]; then
+    echo "Wordlist not found!"
+    exit 1
+fi
 
 for tool in "$PATH_TO_KATANA" "$PATH_TO_NUCLEI" "$PATH_TO_ARJUN" "$PATH_TO_FFUF" "$PATH_TO_JQ"; do
     if [ ! -x "$tool" ]; then
@@ -116,7 +122,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
 
     "$PATH_TO_FFUF" \
         -u "$URL/FUZZ" \
-        -w /usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt
+        -w "$WORDLIST" \
         -t 50 \
         -rate 80 \
         -mc all \
