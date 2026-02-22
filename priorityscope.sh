@@ -101,7 +101,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
     CLEAN_URLS="$OUTPUT_DIR/urls_clean_$TODAY.txt"
 
     sort -u "$KATANA_OUT" \
-    | grep -Evi "\.(woff|css|png|jpg|gif|svg|ttf|woff2|ico|eot|mp4|mp3|pdf)(\?|$)" \
+    | grep -Evi "\.(woff|css|png|jpg|gif|svg|ttf|woff2|ico|eot|mp4|mp3)(\?|$)" \  # can add pdf
     > "$CLEAN_URLS"
 
     JS_FILES="$OUTPUT_DIR/js_files_$TODAY.txt"
