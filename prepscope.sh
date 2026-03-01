@@ -7,7 +7,7 @@ TODAY=$(date +%Y-%m-%d)
 PATH_TO_SUBFINDER="$(command -v subfinder)"
 PATH_TO_HTTPX="$(command -v httpx)"
 
-PATH_TO_STORE="$(dirname "$INPUT")"
+PATH_TO_STORE="$PWD"
 
 echo "This scan was created on $TODAY"
 
@@ -68,7 +68,7 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
         if [ -s "$SUB_OUT" ]; then
             echo "[+] Probing alive subdomains: $DOMAIN"
             ALIVE_OUT="$RUN_DIR/alive/$DOMAIN.txt"
-            "$PATH_TO_HTTPX" -l "$SUB_OUT" -silent -o "$ALIVE_OUT"
+            "$PATH_TO_HTTPX" -list "$SUB_OUT" -silent -o "$ALIVE_OUT"
             [ -s "$ALIVE_OUT" ] && cat "$ALIVE_OUT" >> "$MASTER"
         else
             echo "[-] No subdomains found for $DOMAIN"
