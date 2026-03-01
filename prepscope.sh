@@ -63,7 +63,7 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
         DOMAIN="${LINE#\*.}"
         echo "[+] Enumerating subdomains: $DOMAIN"
         SUB_OUT="$RUN_DIR/subdomains/$DOMAIN.txt"
-        "$PATH_TO_SUBFINDER" -d "$DOMAIN" -silent -o "$SUB_OUT"
+        "$PATH_TO_SUBFINDER" -d "$DOMAIN" -silent -o "$SUB_OUT" || true
 
         if [ -s "$SUB_OUT" ]; then
             echo "[+] Probing alive subdomains: $DOMAIN"
