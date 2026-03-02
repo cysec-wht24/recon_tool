@@ -68,7 +68,7 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
         if [ -s "$SUB_OUT" ]; then
             echo "[+] Probing alive subdomains: $DOMAIN"
             ALIVE_OUT="$RUN_DIR/alive/$DOMAIN.txt"
-            "$PATH_TO_HTTPX" -list "$SUB_OUT" -silent -o "$ALIVE_OUT" || true
+            "$PATH_TO_HTTPX" -list "$SUB_OUT" -silent -o "$ALIVE_OUT" < /dev/null || true
             [ -s "$ALIVE_OUT" ] && cat "$ALIVE_OUT" >> "$MASTER" || true
         else
             echo "[-] No subdomains found for $DOMAIN"
@@ -77,7 +77,7 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
     elif [[ "$LINE" =~ ^https?:// ]]; then
         # Direct URL — probe and add directly
         echo "[+] Probing direct URL: $LINE"
-        ALIVE=$(echo "$LINE" | "$PATH_TO_HTTPX" -silent) || true
+        ALIVE=$("$PATH_TO_HTTPX" -u "$LINE" -silent) || true
         [ -n "$ALIVE" ] && echo "$ALIVE" >> "$MASTER" || true
 
     else
