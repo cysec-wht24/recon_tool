@@ -10,7 +10,7 @@ PATH_TO_ARJUN="$(command -v arjun)"
 PATH_TO_FFUF="$(command -v ffuf)"
 PATH_TO_JQ="$(command -v jq)"
 PATH_TO_STORE="$PWD"
-WORDLIST="/usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt"
+WORDLIST="/usr/share/seclists/Discovery/Web-Content/common.txt"
 
 echo "This scan was created on $TODAY"
 
@@ -96,7 +96,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         -xhr \
         -timeout 30 \
         -retry 2 \
-        -rate-limit 50 \
+        -rate-limit 15 \
         -silent \
         </dev/null \
         > "$KATANA_OUT"
@@ -128,8 +128,8 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         -H "User-Agent: hackerone" \
         -u "$URL/FUZZ" \
         -w "$WORDLIST" \
-        -t 50 \
-        -rate 80 \
+        -t 10 \
+        -rate 20 \
         -mc all \
         -fc 404 \
         -recursion \
@@ -159,6 +159,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         "$PATH_TO_ARJUN" \
             -i "$PARAM_URLS" \
             --headers "User-Agent: hackerone" \
+            -t 3 \
             -o "$ARJUN_JSON" || true
         # Extract discovered URLs from Arjun JSON output
         if [ -s "$ARJUN_JSON" ]; then
@@ -185,11 +186,11 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         "$PATH_TO_NUCLEI" \
             -l "$ALL_URLS" \
             -H "User-Agent: hackerone" \
-            -tags cve,rce,sqli,xss,ssrf,lfi,redirect,exposure,takeover,api,graphql,jwt,cors \
+            -tags cve,rce,sqli,xss,ssrf,lfi,redirect,exposure,takeover,api,graphql,jwt,cors,aws,cloud,misconfig,kubernetes,docker \
             -severity low,medium,high,critical \
             -etags tech,dos,fuzz \
-            -rl 50 \
-            -c 50 \
+            -rl 20 \
+            -c 20 \
             -timeout 10 \
             -retries 2 \
             -o "$OUTPUT_DIR/nuclei_$TODAY.jsonl" \
