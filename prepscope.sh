@@ -69,7 +69,7 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
             echo "[+] Probing alive subdomains: $DOMAIN"
             ALIVE_OUT="$RUN_DIR/alive/$DOMAIN.txt"
             "$PATH_TO_HTTPX" -list "$SUB_OUT" -silent -o "$ALIVE_OUT" || true
-            [ -s "$ALIVE_OUT" ] && cat "$ALIVE_OUT" >> "$MASTER"
+            [ -s "$ALIVE_OUT" ] && cat "$ALIVE_OUT" >> "$MASTER" || true
         else
             echo "[-] No subdomains found for $DOMAIN"
         fi
@@ -78,7 +78,7 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
         # Direct URL — probe and add directly
         echo "[+] Probing direct URL: $LINE"
         ALIVE=$(echo "$LINE" | "$PATH_TO_HTTPX" -silent) || true
-        [ -n "$ALIVE" ] && echo "$ALIVE" >> "$MASTER"
+        [ -n "$ALIVE" ] && echo "$ALIVE" >> "$MASTER" || true
 
     else
         echo "[-] Skipping unrecognized entry: $LINE"
