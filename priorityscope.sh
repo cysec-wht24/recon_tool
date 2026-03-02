@@ -186,8 +186,8 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         "$PATH_TO_NUCLEI" \
             -l "$ALL_URLS" \
             -H "User-Agent: hackerone" \
-            -tags cve,rce,sqli,xss,ssrf,lfi,redirect,exposure,takeover,api,graphql,jwt,cors,aws,cloud,misconfig,kubernetes,docker \
-            -severity low,medium,high,critical \
+            -tags cve,token,secret,panel,rce,sqli,xss,ssrf,lfi,redirect,exposure,takeover,api,graphql,jwt,cors,aws,cloud,misconfig,kubernetes,docker \
+            -severity medium,high,critical \
             -etags tech,dos,fuzz \
             -rl 20 \
             -c 20 \
