@@ -1,10 +1,12 @@
 #!/bin/bash
+set -euo pipefail
+
 INPUT=$1
 TODAY=$(date +%Y-%m-%d)
 PATH_TO_KATANA="$HOME/go/bin/katana"
 PATH_TO_WAYBACKURL="$HOME/go/bin/waybackurls"
 PATH_TO_GAU="$HOME/go/bin/gau"
-PATH_TO_STORE="$HOME/results"
+PATH_TO_STORE="$PWD/scans"
 
 echo "This scan was created on $TODAY"
 if [ -z "$INPUT" ]; then
@@ -63,6 +65,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
 
     echo "[+] standard crawl on $URL"
     "$PATH_TO_KATANA" -u "$URL" \
+        -H "X-Bug-Bounty: HackerOne-bugsmonk" \
         -depth 3 \
         -jc \
         -kf all \
@@ -70,7 +73,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         -rl 100 \
         -silent \
         </dev/null \
-        > "$OUTPUT_DIR/katana_standard_$TODAY.txt"
+        > "$OUTPUT_DIR/katana_standard_$TODAY.txt" || true
 
     echo "[+] Historical URLs (gau + waybackurls) on $URL"
 
@@ -79,7 +82,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
     (
         "$PATH_TO_WAYBACKURL" "$HOST" </dev/null
         "$PATH_TO_GAU" "$HOST" </dev/null
-    ) | sort -u > "$OUTPUT_DIR/historical_$TODAY.txt"
+    ) | sort -u > "$OUTPUT_DIR/historical_$TODAY.txt" || true
 
     echo "Output saved to $OUTPUT_DIR"
 

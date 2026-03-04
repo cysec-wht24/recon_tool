@@ -87,7 +87,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
     KATANA_OUT="$OUTPUT_DIR/katana_raw_$TODAY.txt"
 
     "$PATH_TO_KATANA" -u "$URL" \
-        -H "User-Agent: hackerone" \
+        -H "X-Bug-Bounty: HackerOne-bugsmonk" \
         -headless \
         -jc \
         -kf all \
@@ -125,7 +125,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
     FFUF_JSON="$OUTPUT_DIR/ffuf_dirs_$TODAY.json"
 
     "$PATH_TO_FFUF" \
-        -H "User-Agent: hackerone" \
+        -H "X-Bug-Bounty: HackerOne-bugsmonk" \
         -u "$URL/FUZZ" \
         -w "$WORDLIST" \
         -t 10 \
@@ -158,7 +158,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         echo "[+] Running Arjun"
         "$PATH_TO_ARJUN" \
             -i "$PARAM_URLS" \
-            --headers "User-Agent: hackerone" \
+            --headers "X-Bug-Bounty: HackerOne-bugsmonk" \
             -t 3 \
             -o "$ARJUN_JSON" || true
         # Extract discovered URLs from Arjun JSON output
@@ -185,7 +185,7 @@ while IFS= read -r URL || [ -n "$URL" ]; do
         echo "[+] Running Nuclei"
         "$PATH_TO_NUCLEI" \
             -l "$ALL_URLS" \
-            -H "User-Agent: hackerone" \
+            -H "X-Bug-Bounty: HackerOne-bugsmonk" \
             -tags cve,token,secret,panel,rce,sqli,xss,ssrf,lfi,redirect,exposure,takeover,api,graphql,jwt,cors,aws,cloud,misconfig,kubernetes,docker \
             -severity medium,high,critical \
             -etags tech,dos,fuzz \
